@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Health Check</title>
+</head>
+<body>
+
+<h2>Server Health Dashboard</h2>
+
+<form method="POST">
+    Hostname: <input type="text" name="host" required>
+    <button type="submit">Check</button>
+</form>
+
+<hr>
+
+{% if data %}
+    <h3>Results:</h3>
+
+    <p><b>IP:</b> {{ data.ip }}</p>
+
+    <p>
+        Boks Status:
+        <span style="color: {{ 'green' if data.boks == 'OK' else 'red' }}">
+            {{ data.boks }}
+        </span>
+    </p>
+
+    <p>
+        Port 6503:
+        <span style="color: {{ 'green' if data.port == 'OK' else 'red' }}">
+            {{ data.port }}
+        </span>
+    </p>
+
+    <h4>Host Info:</h4>
+    <pre>{{ data.host_info }}</pre>
+
+    <h4>FQueue:</h4>
+    <pre>{{ data.fque }}</pre>
+
+    <h4>Node Key:</h4>
+    <pre>{{ data.nodekey }}</pre>
+
+{% endif %}
+
+</body>
+</html>
