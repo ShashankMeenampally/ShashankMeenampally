@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Local Server Monitor</title>
+</head>
+<body>
+
+<h2>Check Local Server</h2>
+
+<form method="POST">
+    <input type="text" name="hostname" placeholder="Enter Hostname" required>
+    <button type="submit">Run</button>
+</form>
+
+{% if error %}
+    <p style="color:red;">{{ error }}</p>
+{% endif %}
+
+{% if data %}
+    <h3>Uptime</h3>
+    <pre>{{ data.uptime }}</pre>
+
+    <h3>Memory</h3>
+    <pre>{{ data.memory }}</pre>
+
+    <h3>Disk</h3>
+    <pre>{{ data.disk }}</pre>
+{% endif %}
+
+</body>
+</html>
