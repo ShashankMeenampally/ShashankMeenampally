@@ -1,38 +1,41 @@
+# tools/cleanup_tool.py
 from crewai.tools import BaseTool
 import subprocess
 
 class CleanupTmpTool(BaseTool):
     name: str = "cleanup_tmp_directory"
-    description: str = "Clean /tmp directory only if disk usage reaches 80%."
+    description: str = "Clean /tmp directory on remote Linux VM if disk usage reaches 80%"
 
     def _run(self) -> str:
         host = "192.168.136.128"
-
-        # command that runs on remote VM
+        username = "admin"
+        
         remote_command = """
-usage=$(df /tmp | awk 'NR==2 {print $5}' | sed 's/%//');
-if [ "$usage" -ge 60 ]; then
-    find /tmp -type f -delete
-    echo "Cleanup executed. /tmp usage was ${usage}%"
-else
-    echo "No cleanup needed. /tmp usage is ${usage}%"
-fi
-"""
-
-        command = f"ssh admin@{host} \"{remote_command}\""
-
+        usage=$(df /tmp | awk 'NR==2 {print $5}' | sed 's/%//');
+        if [ "$usage" -ge 80 ]; then
+            find /tmp -type f -delete
+            echo "SUCCESS: Cleanup executed. /tmp usage was ${usage}%"
+        else
+            echo "INFO: No cleanup needed. /tmp usage is ${usage}%"
+        fi
+        """
+        
+        ssh_command = ["ssh", f"{username}@{host}", remote_command]
+        
         try:
             result = subprocess.run(
-                command,
-                shell=True,
+                ssh_command,
                 capture_output=True,
-                text=True
+                text=True,
+                timeout=30
             )
-
+            
             if result.returncode == 0:
                 return result.stdout.strip()
             else:
-                return f"Cleanup failed: {result.stderr}"
-
+                return f"ERROR: Cleanup failed: {result.stderr}"
         except Exception as e:
-            return f"Error during cleanup: {str(e)}"
+            return f"ERROR: {str(e)}"
+
+# Create an instance to export
+cleanup_tmp_directory = CleanupTmpTool()
