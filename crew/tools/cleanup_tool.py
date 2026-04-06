@@ -1,41 +1,39 @@
-# tools/cleanup_tool.py
 from crewai.tools import BaseTool
 import subprocess
 
-class CleanupTmpTool(BaseTool):
-    name: str = "cleanup_tmp_directory"
-    description: str = "Clean /tmp directory on remote Linux VM if disk usage reaches 80%"
+class CheckDiskTool(BaseTool):
+    name: str = "check_disk"
+    description: str = "Check disk usage percentage on Linux server"
+    
+    def _run(self, host: str = "192.168.136.128") -> str:
+        cmd = 'ssh admin@192.168.136.128 "df / | awk \'NR==2 {print $5}\' | sed \'s/%//\'"'
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            return f"ERROR: {result.stderr}"
+        
+        usage = result.stdout.strip()
+        return usage if usage else "ERROR"
 
-    def _run(self) -> str:
-        host = "192.168.136.128"
-        username = "admin"
+class CleanupTool(BaseTool):
+    name: str = "cleanup"
+    description: str = "Delete all files in /tmp directory"
+    
+    def _run(self, host: str = "192.168.136.128") -> str:
+        # Delete all files in /tmp
+        cmd = 'ssh admin@192.168.136.128 "sudo rm -rf /tmp/* 2>/dev/null"'
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         
-        remote_command = """
-        usage=$(df /tmp | awk 'NR==2 {print $5}' | sed 's/%//');
-        if [ "$usage" -ge 80 ]; then
-            find /tmp -type f -delete
-            echo "SUCCESS: Cleanup executed. /tmp usage was ${usage}%"
-        else
-            echo "INFO: No cleanup needed. /tmp usage is ${usage}%"
-        fi
-        """
+        if result.returncode != 0:
+            return f"ERROR: {result.stderr}"
         
-        ssh_command = ["ssh", f"{username}@{host}", remote_command]
+        # Check new usage
+        check_cmd = 'ssh admin@192.168.136.128 "df / | awk \'NR==2 {print $5}\' | sed \'s/%//\'"'
+        check_result = subprocess.run(check_cmd, shell=True, capture_output=True, text=True)
+        new_usage = check_result.stdout.strip()
         
-        try:
-            result = subprocess.run(
-                ssh_command,
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
-            
-            if result.returncode == 0:
-                return result.stdout.strip()
-            else:
-                return f"ERROR: Cleanup failed: {result.stderr}"
-        except Exception as e:
-            return f"ERROR: {str(e)}"
+        return f"SUCCESS: Deleted files in /tmp. New disk usage: {new_usage}%"
 
-# Create an instance to export
-cleanup_tmp_directory = CleanupTmpTool()
+# Create instances
+check_disk = CheckDiskTool()
+cleanup = CleanupTool()

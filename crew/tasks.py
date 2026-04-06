@@ -3,14 +3,14 @@ from agents import sysadmin_agent
 
 cleanup_task = Task(
     description="""
-    Connect to the Linux VM at 192.168.136.128 using SSH.
-
-    Check the disk usage of /tmp.
-    If usage is greater than or equal to 80%, clean the files in /tmp.
-    Otherwise do nothing.
-
-    Use the cleanup tool available to you.
+    Check disk usage on server 192.168.136.128 using check_disk tool.
+    
+    If usage is 60% or more:
+        - Use cleanup tool to delete all files in /tmp
+        - Check disk usage again
+    
+    Report: "Before: X%, After: Y%"
     """,
-    expected_output="A message indicating whether cleanup was executed or skipped based on /tmp usage.",
+    expected_output="Disk usage before and after cleanup",
     agent=sysadmin_agent
 )
